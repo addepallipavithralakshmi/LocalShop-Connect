@@ -1,0 +1,64 @@
+
+/* ========================================
+   CARDS
+======================================== */
+
+.shop-card,
+.post-card,
+.feature-card {
+
+    border:
+        none;
+
+    border-radius:
+        18px;
+
+    background:
+        white;
+
+    box-shadow:
+        0 5px 20px
+        rgba(30, 27, 75, 0.08);
+
+    overflow:
+        hidden;
+
+    transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease;
+
+}
+
+
+.shop-card:hover,
+.post-card:hover,
+.feature-card:hover {
+
+    transform:
+        translateY(-8px);
+
+    box-shadow:
+        0 15px 35px
+        rgba(124, 58, 237, 0.18);
+
+}
+
+
+/* Images */
+
+.shop-card img,
+.post-card img {
+
+    transition:
+        transform 0.5s ease;
+
+}
+
+
+.shop-card:hover img,
+.post-card:hover img {
+
+    transform:
+        scale(1.05);
+
+}

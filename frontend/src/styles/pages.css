@@ -1,0 +1,128 @@
+/* ========================================
+   PAGE STYLING
+======================================== */
+
+.page-title {
+
+    font-weight:
+        800;
+
+    background:
+        linear-gradient(
+            90deg,
+            #7c3aed,
+            #ec4899
+        );
+
+    -webkit-background-clip:
+        text;
+
+    -webkit-text-fill-color:
+        transparent;
+
+}
+
+
+.page-subtitle {
+
+    color:
+        #6b7280;
+
+}
+
+
+/* Hero */
+
+.hero-section {
+
+    background:
+        linear-gradient(
+            135deg,
+            #faf5ff,
+            #fce7f3
+        );
+
+}
+
+
+.hero-content {
+
+    animation:
+        slideUp 0.8s ease;
+
+}
+
+
+.hero-image {
+
+    animation:
+        floating 4s ease-in-out infinite;
+
+}
+
+
+/* Gradient section */
+
+.gradient-section {
+
+    background:
+        linear-gradient(
+            135deg,
+            #faf5ff,
+            #fdf2f8
+        );
+
+}
+
+
+/* CTA */
+
+.cta-section {
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c3aed,
+            #ec4899
+        );
+
+    border-radius:
+        25px;
+
+}
+
+
+/* Footer */
+
+.local-footer {
+
+    background:
+        linear-gradient(
+            90deg,
+            #1e1b4b,
+            #4c1d95
+        );
+
+    color:
+        white;
+
+}
+
+
+.local-footer a {
+
+    color:
+        white;
+
+    text-decoration:
+        none;
+
+}
+
+
+.local-footer a:hover {
+
+    color:
+        #fce7f3;
+
+}

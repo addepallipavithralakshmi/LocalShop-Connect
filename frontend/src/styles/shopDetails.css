@@ -1,0 +1,783 @@
+/* ========================================
+   SHOP DETAILS PAGE
+======================================== */
+
+.shop-details-page {
+    min-height: 100vh;
+
+    background:
+        linear-gradient(
+            135deg,
+            #faf5ff,
+            #ffffff,
+            #fdf2f8
+        );
+
+    padding:
+        45px 0 70px;
+}
+
+
+/* ========================================
+   SHOP PROFILE CARD
+======================================== */
+
+.shop-profile-card {
+
+    background: white;
+
+    border: none;
+
+    border-radius: 24px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 10px 35px
+        rgba(30, 27, 75, 0.09);
+
+    animation:
+        shopDetailsFade 0.7s ease;
+}
+
+
+/* ========================================
+   SHOP IMAGE
+======================================== */
+
+.shop-details-image-wrapper {
+
+    height: 320px;
+
+    overflow: hidden;
+
+    position: relative;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c3aed,
+            #ec4899
+        );
+}
+
+
+.shop-details-image {
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: cover;
+
+    display: block;
+
+    transition:
+        transform 0.5s ease;
+}
+
+
+.shop-profile-card:hover
+.shop-details-image {
+
+    transform:
+        scale(1.03);
+}
+
+
+/* Fallback icon */
+
+.shop-details-placeholder {
+
+    height: 320px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color: white;
+
+    font-size: 90px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c3aed,
+            #ec4899
+        );
+}
+
+
+/* ========================================
+   SHOP PROFILE BODY
+======================================== */
+
+.shop-profile-body {
+
+    padding:
+        35px;
+}
+
+
+/* ========================================
+   SHOP NAME
+======================================== */
+
+.shop-details-title {
+
+    font-size:
+        2.2rem;
+
+    font-weight:
+        800;
+
+    color:
+        #1e1b4b;
+
+    margin-bottom:
+        10px;
+}
+
+
+/* ========================================
+   CATEGORY
+======================================== */
+
+.shop-details-category {
+
+    display:
+        inline-block;
+
+    background:
+        #f3e8ff;
+
+    color:
+        #7c3aed;
+
+    padding:
+        7px 15px;
+
+    border-radius:
+        20px;
+
+    font-size:
+        14px;
+
+    font-weight:
+        600;
+}
+
+
+/* ========================================
+   ABOUT SECTION
+======================================== */
+
+.shop-about {
+
+    margin-top:
+        25px;
+
+    padding:
+        20px;
+
+    background:
+        #faf5ff;
+
+    border-radius:
+        15px;
+
+    border-left:
+        4px solid #7c3aed;
+}
+
+
+.shop-about h4 {
+
+    color:
+        #1e1b4b;
+
+    font-weight:
+        700;
+
+    margin-bottom:
+        10px;
+}
+
+
+.shop-about p {
+
+    color:
+        #6b7280;
+
+    line-height:
+        1.7;
+
+    margin-bottom:
+        0;
+}
+
+
+/* ========================================
+   CONTACT / LOCATION
+======================================== */
+
+.shop-info-box {
+
+    display:
+        flex;
+
+    align-items:
+        flex-start;
+
+    gap:
+        14px;
+
+    padding:
+        16px;
+
+    margin-top:
+        12px;
+
+    background:
+        #ffffff;
+
+    border:
+        1px solid #f0e7ff;
+
+    border-radius:
+        14px;
+
+    transition:
+        all 0.3s ease;
+}
+
+
+.shop-info-box:hover {
+
+    transform:
+        translateX(5px);
+
+    box-shadow:
+        0 5px 15px
+        rgba(124, 58, 237, 0.08);
+}
+
+
+.shop-info-icon {
+
+    width:
+        42px;
+
+    height:
+        42px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    border-radius:
+        12px;
+
+    background:
+        #f3e8ff;
+
+    color:
+        #7c3aed;
+
+    flex-shrink:
+        0;
+}
+
+
+.shop-info-box h6 {
+
+    margin:
+        0 0 4px;
+
+    font-weight:
+        700;
+
+    color:
+        #1e1b4b;
+}
+
+
+.shop-info-box p {
+
+    margin:
+        0;
+
+    color:
+        #6b7280;
+}
+
+
+/* ========================================
+   CONTACT BUTTON
+======================================== */
+
+.shop-contact-btn {
+
+    border:
+        none;
+
+    border-radius:
+        12px;
+
+    padding:
+        12px 20px;
+
+    color:
+        white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c3aed,
+            #ec4899
+        );
+
+    transition:
+        all 0.3s ease;
+}
+
+
+.shop-contact-btn:hover {
+
+    color:
+        white;
+
+    transform:
+        translateY(-3px);
+
+    box-shadow:
+        0 8px 20px
+        rgba(124, 58, 237, 0.25);
+}
+
+
+/* ========================================
+   POSTS SECTION
+======================================== */
+
+.shop-posts-section {
+
+    margin-top:
+        55px;
+}
+
+
+.shop-posts-title {
+
+    font-size:
+        2rem;
+
+    font-weight:
+        800;
+
+    color:
+        #1e1b4b;
+}
+
+
+.shop-posts-subtitle {
+
+    color:
+        #6b7280;
+}
+
+
+/* ========================================
+   POST CARD
+======================================== */
+
+.shop-details-post-card {
+
+    height:
+        100%;
+
+    background:
+        white;
+
+    border:
+        none;
+
+    border-radius:
+        18px;
+
+    overflow:
+        hidden;
+
+    box-shadow:
+        0 7px 25px
+        rgba(30, 27, 75, 0.07);
+
+    transition:
+        transform 0.35s ease,
+        box-shadow 0.35s ease;
+
+    animation:
+        shopPostFade 0.7s ease;
+}
+
+
+.shop-details-post-card:hover {
+
+    transform:
+        translateY(-8px);
+
+    box-shadow:
+        0 15px 35px
+        rgba(124, 58, 237, 0.15);
+}
+
+
+/* ========================================
+   POST IMAGE
+======================================== */
+
+.shop-details-post-image {
+
+    width:
+        100%;
+
+    height:
+        220px;
+
+    object-fit:
+        cover;
+
+    display:
+        block;
+
+    transition:
+        transform 0.5s ease;
+}
+
+
+.shop-details-post-card:hover
+.shop-details-post-image {
+
+    transform:
+        scale(1.05);
+}
+
+
+/* ========================================
+   POST IMAGE PLACEHOLDER
+======================================== */
+
+.shop-details-post-placeholder {
+
+    height:
+        220px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    background:
+        #f5f3ff;
+
+    color:
+        #a78bfa;
+
+    font-size:
+        55px;
+}
+
+
+/* ========================================
+   POST BODY
+======================================== */
+
+.shop-details-post-body {
+
+    padding:
+        22px;
+}
+
+
+.shop-details-post-title {
+
+    font-weight:
+        700;
+
+    color:
+        #1e1b4b;
+
+    margin-bottom:
+        10px;
+}
+
+
+.shop-details-post-description {
+
+    color:
+        #6b7280;
+
+    line-height:
+        1.6;
+}
+
+
+.shop-details-post-price {
+
+    color:
+        #16a34a;
+
+    font-weight:
+        800;
+
+    font-size:
+        1.2rem;
+}
+
+
+/* ========================================
+   INTEREST BUTTON
+======================================== */
+
+.shop-interest-btn {
+
+    width:
+        100%;
+
+    border:
+        1px solid #ec4899;
+
+    border-radius:
+        10px;
+
+    background:
+        white;
+
+    color:
+        #db2777;
+
+    padding:
+        10px;
+
+    transition:
+        all 0.3s ease;
+}
+
+
+.shop-interest-btn:hover {
+
+    color:
+        white;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c3aed,
+            #ec4899
+        );
+
+    border-color:
+        transparent;
+
+    transform:
+        translateY(-2px);
+}
+
+
+/* ========================================
+   BACK BUTTON
+======================================== */
+
+.shop-back-btn {
+
+    border:
+        1px solid #ddd6fe;
+
+    color:
+        #7c3aed;
+
+    background:
+        white;
+
+    border-radius:
+        10px;
+
+    padding:
+        10px 22px;
+
+    transition:
+        all 0.3s ease;
+}
+
+
+.shop-back-btn:hover {
+
+    color:
+        white;
+
+    background:
+        #7c3aed;
+
+    border-color:
+        #7c3aed;
+
+    transform:
+        translateY(-2px);
+}
+
+
+/* ========================================
+   EMPTY POSTS
+======================================== */
+
+.shop-no-posts {
+
+    text-align:
+        center;
+
+    background:
+        white;
+
+    border-radius:
+        18px;
+
+    padding:
+        55px 20px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(30, 27, 75, 0.06);
+}
+
+
+.shop-no-posts i {
+
+    font-size:
+        60px;
+
+    color:
+        #c4b5fd;
+}
+
+
+.shop-no-posts h4 {
+
+    margin-top:
+        15px;
+
+    color:
+        #1e1b4b;
+
+    font-weight:
+        700;
+}
+
+
+.shop-no-posts p {
+
+    color:
+        #6b7280;
+}
+
+
+/* ========================================
+   ANIMATIONS
+======================================== */
+
+@keyframes shopDetailsFade {
+
+    from {
+
+        opacity:
+            0;
+
+        transform:
+            translateY(25px);
+    }
+
+    to {
+
+        opacity:
+            1;
+
+        transform:
+            translateY(0);
+    }
+}
+
+
+@keyframes shopPostFade {
+
+    from {
+
+        opacity:
+            0;
+
+        transform:
+            translateY(20px);
+    }
+
+    to {
+
+        opacity:
+            1;
+
+        transform:
+            translateY(0);
+    }
+}
+
+
+/* ========================================
+   MOBILE
+======================================== */
+
+@media (max-width: 768px) {
+
+    .shop-details-page {
+
+        padding-top:
+            25px;
+    }
+
+
+    .shop-details-image-wrapper,
+    .shop-details-placeholder {
+
+        height:
+            230px;
+    }
+
+
+    .shop-profile-body {
+
+        padding:
+            22px;
+    }
+
+
+    .shop-details-title {
+
+        font-size:
+            1.7rem;
+    }
+
+
+    .shop-posts-title {
+
+        font-size:
+            1.6rem;
+    }
+
+}
