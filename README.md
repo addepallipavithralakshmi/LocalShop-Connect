@@ -224,6 +224,8 @@ Shop owners can:
               |                         |
               v                         v
         Show Interest              Dashboard
+
+
 ## 7. Customer Features
 
 Customers can use LocalShop Connect to discover local shops, products, and offers.
