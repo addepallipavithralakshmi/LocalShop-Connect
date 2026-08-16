@@ -1,92 +1,110 @@
-# LocalShop Connect
+# 🏪 LocalShop Connect
 
-LocalShop Connect is a full-stack web application that connects local shop owners with customers. Shop owners can manage their shops, products, and offers, while customers can discover shops, browse products, search, filter, and show interest.
+### A Full-Stack Platform Connecting Local Shops and Customers
 
----
+LocalShop Connect is a full-stack web application designed to connect **local shop owners with customers** through a single platform.
 
-## Project Overview
+Shop owners can create and manage their shops, publish product or offer posts, upload images, and manage their posts from their dashboard.
 
-LocalShop Connect provides a single platform for local businesses to showcase their shops, products, and offers.
+Customers can browse local shops, search and filter posts, view shop details, and show interest in products or offers.
 
-Customers can discover local shops and interact with available products and offers.
+The project focuses on providing a simple, interactive, and user-friendly experience for both shop owners and customers.
 
----
+# 📖 About the Project
 
-## Project Purpose
+LocalShop Connect is a web application developed to provide a common platform for **local businesses and customers**.
 
-The main purpose of the project is to help local shop owners improve their online presence and provide customers with an easy way to discover local businesses and products.
+In a traditional situation, customers may need to visit different shops or use different platforms to find products, offers, and local businesses.
 
----
+LocalShop Connect provides a centralized platform where:
 
-## Key Features
-
-- User registration and login
-- JWT authentication
-- Shop creation and management
-- Shop image upload
-- Product and offer posts
-- Product image upload
-- Edit and delete shops
-- Edit and delete posts
-- Customer interest system
-- Search and category filtering
-- Shop owner dashboard
-- Responsive and interactive UI
-- REST API integration
-- MySQL database
-
----
-
-## Customer Features
-
-Customers can:
+### Customers can:
 
 - Register and login
 - Browse local shops
+- Search for products and shops
+- Filter posts by category
 - View shop details
-- Browse products and offers
-- Search products and shops
-- Filter products by category
-- View product prices and images
-- Show interest in products
-- Remove interest from products
+- View product/offer posts
+- Show interest in posts
+- View interest counts
 
----
-
-## Shop Owner Features
-
-Shop owners can:
+### Shop owners can:
 
 - Register and login
-- Create a shop
-- Upload shop images
+- Create their shop
+- Upload a shop image
 - View their shop
-- Edit their shop
+- Edit shop information
 - Delete their shop
-- Create product and offer posts
-- Upload product images
+- Create product/offer posts
+- Upload post images
 - Edit posts
 - Delete posts
-- View customer interest counts
-- Manage their shop through the dashboard
-
-> An admin panel is not included in the current version.
+- View interest counts
+- Manage everything through their dashboard
 
 ---
 
-## Authentication
+# 🎯 Problem Statement
 
-The application uses JWT-based authentication to protect user-specific operations.
+Local shops often depend on traditional methods or different social media platforms to promote their products and offers.
+
+Customers may face difficulties in:
+
+- Finding nearby local shops
+- Knowing what products are available
+- Discovering shop offers
+- Comparing different shops
+- Finding updated product posts
+- Directly interacting with shop content
+
+LocalShop Connect addresses these problems by providing a single platform for discovering and managing local shops and their posts.
+
+---
+
+# 🎯 Objectives
+
+The main objectives of LocalShop Connect are:
+
+1. Create a centralized platform for local shops and customers.
+2. Allow shop owners to create and manage their shops.
+3. Allow shop owners to publish products and offers.
+4. Allow customers to discover shops and posts.
+5. Provide search and category filtering.
+6. Allow customers to show interest in posts.
+7. Provide a dashboard for shop owners.
+8. Provide secure user authentication.
+9. Support image uploads for shops and posts.
+10. Provide an interactive and responsive user interface.
+
+---
+
+# ✨ Features
+
+## 🔐 User Authentication
+
+The application provides secure authentication for users.
+
+Users can:
+
+- Register
+- Login
+- Logout
+- Access protected features
+- Maintain an authenticated session using JWT
+
+JWT tokens are used when accessing protected backend APIs.
+
+Example:
 
 ```text
-Register
-   ↓
-Login
-   ↓
-JWT Token
-   ↓
-Token Sent With Request
-   ↓
-Backend Verification
-   ↓
-Access Granted
+User Login
+     ↓
+Backend verifies credentials
+     ↓
+JWT Token generated
+     ↓
+Token stored in browser
+     ↓
+Token sent with protected API requests
