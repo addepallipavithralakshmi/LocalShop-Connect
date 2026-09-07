@@ -1,6 +1,6 @@
 const express = require("express");
-const multer = require("multer");
-const path = require("path");
+const multer  = require("multer");
+const path    = require("path");
 
 const router = express.Router();
 
@@ -9,289 +9,102 @@ const router = express.Router();
 // CONTROLLER
 // ========================================
 
-const postController =
-    require("../controllers/postController");
+const {
+    createPost,
+    getPostById,
+    getPostsByShop,
+    getAllPosts,
+    updatePost,
+    deletePost,
+    addInterest,
+    removeInterest,
+    getInterestCount,
+    getInterestStatus
+} = require("../controllers/postController");
 
 
 // ========================================
 // AUTH MIDDLEWARE
 // ========================================
 
-const authMiddleware =
+const { verifyToken } =
     require("../middleware/authMiddleware");
-
-// Supports both:
-// module.exports = verifyToken
-// and
-// module.exports = { verifyToken }
-
-const verifyToken =
-    typeof authMiddleware === "function"
-        ? authMiddleware
-        : authMiddleware.verifyToken;
-
-
-// ========================================
-// CHECK FUNCTIONS
-// ========================================
-
-console.log(
-    "========================================"
-);
-
-console.log(
-    "POST CONTROLLER FUNCTIONS"
-);
-
-console.log(
-    "createPost:",
-    typeof postController.createPost
-);
-
-console.log(
-    "getPostsByShop:",
-    typeof postController.getPostsByShop
-);
-
-console.log(
-    "getAllPosts:",
-    typeof postController.getAllPosts
-);
-
-console.log(
-    "updatePost:",
-    typeof postController.updatePost
-);
-
-console.log(
-    "deletePost:",
-    typeof postController.deletePost
-);
-
-console.log(
-    "addInterest:",
-    typeof postController.addInterest
-);
-
-console.log(
-    "removeInterest:",
-    typeof postController.removeInterest
-);
-
-console.log(
-    "getInterestCount:",
-    typeof postController.getInterestCount
-);
-
-console.log(
-    "getInterestStatus:",
-    typeof postController.getInterestStatus
-);
-
-console.log(
-    "verifyToken:",
-    typeof verifyToken
-);
-
-console.log(
-    "========================================"
-);
 
 
 // ========================================
 // MULTER STORAGE
 // ========================================
 
-const storage =
-    multer.diskStorage({
+const storage = multer.diskStorage({
 
-        destination: (req, file, cb) => {
+    destination: (req, file, cb) => {
+        cb(null, "uploads/post-images");
+    },
 
-            cb(
-                null,
-                "uploads/post-images"
-            );
+    filename: (req, file, cb) => {
+        const uniqueName =
+            Date.now() +
+            "-" +
+            Math.round(Math.random() * 1e9) +
+            path.extname(file.originalname);
+        cb(null, uniqueName);
+    }
 
-        },
+});
 
-        filename: (req, file, cb) => {
+const upload = multer({
 
-            const uniqueName =
-                Date.now() +
-                "-" +
-                Math.round(
-                    Math.random() * 1E9
-                ) +
-                path.extname(
-                    file.originalname
-                );
+    storage,
 
-            cb(
-                null,
-                uniqueName
-            );
+    limits: { fileSize: 5 * 1024 * 1024 },
 
+    fileFilter: (req, file, cb) => {
+
+        const allowed = /jpeg|jpg|png|webp/;
+
+        const extOk  = allowed.test(path.extname(file.originalname).toLowerCase());
+        const mimeOk = allowed.test(file.mimetype);
+
+        if (extOk && mimeOk) {
+            cb(null, true);
+        } else {
+            cb(new Error("Only JPG, JPEG, PNG and WEBP images are allowed"));
         }
 
-    });
+    }
+
+});
 
 
 // ========================================
-// MULTER UPLOAD
+// ROUTES
+// Note: specific sub-paths (/shop/:id, /interests, /interest-status)
+// must come BEFORE the wildcard /:postId routes.
 // ========================================
 
-const upload =
-    multer({
+// Create post
+router.post(  "/",                      verifyToken, upload.single("image"), createPost);
 
-        storage: storage,
+// Get all posts
+router.get(   "/",                      getAllPosts);
 
-        limits: {
+// Get posts by shop  — must be before /:postId
+router.get(   "/shop/:shopId",          getPostsByShop);
 
-            fileSize:
-                5 * 1024 * 1024
+// Get single post by ID
+router.get(   "/:postId",              getPostById);
 
-        },
+// Update post
+router.put(   "/:postId",              verifyToken, updatePost);
 
-        fileFilter:
-            (req, file, cb) => {
+// Delete post
+router.delete("/:postId",              verifyToken, deletePost);
 
-                const allowedTypes =
-                    /jpeg|jpg|png|webp/;
-
-                const extension =
-                    allowedTypes.test(
-                        path
-                            .extname(
-                                file.originalname
-                            )
-                            .toLowerCase()
-                    );
-
-                const mimeType =
-                    allowedTypes.test(
-                        file.mimetype
-                    );
-
-                if (
-                    extension &&
-                    mimeType
-                ) {
-
-                    cb(
-                        null,
-                        true
-                    );
-
-                } else {
-
-                    cb(
-                        new Error(
-                            "Only JPG, JPEG, PNG and WEBP images are allowed"
-                        )
-                    );
-
-                }
-
-            }
-
-    });
-
-
-// ========================================
-// CREATE POST
-// ========================================
-
-router.post(
-    "/",
-    verifyToken,
-    upload.single("image"),
-    postController.createPost
-);
-
-
-// ========================================
-// GET ALL POSTS
-// ========================================
-
-router.get(
-    "/",
-    postController.getAllPosts
-);
-
-
-// ========================================
-// GET POSTS BY SHOP
-// ========================================
-
-router.get(
-    "/shop/:shopId",
-    postController.getPostsByShop
-);
-
-
-// ========================================
-// UPDATE POST
-// ========================================
-
-router.put(
-    "/:postId",
-    verifyToken,
-    postController.updatePost
-);
-
-
-// ========================================
-// DELETE POST
-// ========================================
-
-router.delete(
-    "/:postId",
-    verifyToken,
-    postController.deletePost
-);
-
-
-// ========================================
-// ADD INTEREST
-// ========================================
-
-router.post(
-    "/:postId/interest",
-    verifyToken,
-    postController.addInterest
-);
-
-
-// ========================================
-// REMOVE INTEREST
-// ========================================
-
-router.delete(
-    "/:postId/interest",
-    verifyToken,
-    postController.removeInterest
-);
-
-
-// ========================================
-// GET INTEREST COUNT
-// ========================================
-
-router.get(
-    "/:postId/interests",
-    postController.getInterestCount
-);
-
-
-// ========================================
-// GET INTEREST STATUS
-// ========================================
-
-router.get(
-    "/:postId/interest-status",
-    verifyToken,
-    postController.getInterestStatus
-);
+// Interest routes — must be before /:postId delete to avoid ambiguity
+router.post(  "/:postId/interest",     verifyToken, addInterest);
+router.delete("/:postId/interest",     verifyToken, removeInterest);
+router.get(   "/:postId/interests",    getInterestCount);
+router.get(   "/:postId/interest-status", verifyToken, getInterestStatus);
 
 
 // ========================================

@@ -5,131 +5,66 @@ const db = require("../config/db");
 // CREATE POST
 // ======================================================
 
-const createPost = (req, res) => {
+const createPost = async (req, res) => {
 
-    const {
-        title,
-        description,
-        price
-    } = req.body;
+    try {
 
-    const ownerId =
-        req.user.userId;
+        const { title, description, price } = req.body;
+
+        const ownerId = req.user.userId;
 
 
-    // Find shop of logged-in owner
+        // Find shop of logged-in owner
 
-    const shopSql = `
-        SELECT shop_id
-        FROM shops
-        WHERE owner_id = ?
-    `;
-
-
-    db.query(
-        shopSql,
-        [ownerId],
-        (err, shopResults) => {
-
-            if (err) {
-
-                console.error(
-                    "Find shop error:",
-                    err
-                );
-
-                return res.status(500).json({
-                    message:
-                        "Database error"
-                });
-
-            }
+        const shopResult = await db.query(
+            `SELECT shop_id FROM shops WHERE owner_id = $1`,
+            [ownerId]
+        );
 
 
-            if (
-                shopResults.length === 0
-            ) {
+        if (shopResult.rows.length === 0) {
 
-                return res.status(404).json({
-
-                    message:
-                        "You must create a shop before creating a post"
-
-                });
-
-            }
-
-
-            const shopId =
-                shopResults[0].shop_id;
-
-
-            // Image
-
-            const image =
-                req.file
-                    ? req.file.filename
-                    : null;
-
-
-            // Insert post
-
-            const postSql = `
-                INSERT INTO posts
-                (
-                    shop_id,
-                    title,
-                    description,
-                    image,
-                    price
-                )
-                VALUES (?, ?, ?, ?, ?)
-            `;
-
-
-            db.query(
-                postSql,
-                [
-                    shopId,
-                    title,
-                    description,
-                    image,
-                    price || null
-                ],
-                (err, result) => {
-
-                    if (err) {
-
-                        console.error(
-                            "Create post error:",
-                            err
-                        );
-
-                        return res.status(500).json({
-
-                            message:
-                                "Failed to create post"
-
-                        });
-
-                    }
-
-
-                    res.status(201).json({
-
-                        message:
-                            "Post created successfully",
-
-                        postId:
-                            result.insertId
-
-                    });
-
-                }
-            );
+            return res.status(404).json({
+                message: "You must create a shop before creating a post"
+            });
 
         }
-    );
+
+
+        const shopId = shopResult.rows[0].shop_id;
+
+        const image = req.file ? req.file.filename : null;
+
+
+        const postResult = await db.query(
+            `INSERT INTO posts (shop_id, title, description, image, price)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING post_id`,
+            [
+                shopId,
+                title,
+                description,
+                image,
+                price || null
+            ]
+        );
+
+
+        return res.status(201).json({
+            message: "Post created successfully",
+            postId:  postResult.rows[0].post_id
+        });
+
+
+    } catch (error) {
+
+        console.error("Create post error:", error);
+
+        return res.status(500).json({
+            message: "Failed to create post"
+        });
+
+    }
 
 };
 
@@ -138,65 +73,43 @@ const createPost = (req, res) => {
 // GET ALL POSTS
 // ======================================================
 
-const getAllPosts = (req, res) => {
+const getAllPosts = async (req, res) => {
 
-    const sql = `
-        SELECT
-            p.post_id,
-            p.shop_id,
-            p.title,
-            p.description,
-            p.image,
-            p.price,
-            p.created_at,
+    try {
 
-            s.shop_name,
-            s.category,
-            s.city
-
-        FROM posts p
-
-        JOIN shops s
-            ON p.shop_id = s.shop_id
-
-        ORDER BY
-            p.created_at DESC
-    `;
+        const result = await db.query(
+            `SELECT
+                p.post_id,
+                p.shop_id,
+                p.title,
+                p.description,
+                p.image,
+                p.price,
+                p.created_at,
+                s.shop_name,
+                s.category,
+                s.city
+             FROM posts p
+             JOIN shops s ON p.shop_id = s.shop_id
+             ORDER BY p.created_at DESC`
+        );
 
 
-    db.query(
-        sql,
-        (err, results) => {
-
-            if (err) {
-
-                console.error(
-                    "Get all posts error:",
-                    err
-                );
-
-                return res.status(500).json({
-
-                    message:
-                        "Failed to fetch posts"
-
-                });
-
-            }
+        return res.status(200).json({
+            message: "All posts fetched successfully",
+            posts:   result.rows
+        });
 
 
-            res.status(200).json({
+    } catch (error) {
 
-                message:
-                    "All posts fetched successfully",
+        console.error("Get all posts error:", error);
 
-                posts:
-                    results
+        return res.status(500).json({
+            message: "Failed to fetch posts"
+        });
 
-            });
-
-        }
-    );
+    }
 
 };
 
@@ -205,66 +118,91 @@ const getAllPosts = (req, res) => {
 // GET POSTS BY SHOP
 // ======================================================
 
-const getPostsByShop = (req, res) => {
+const getPostsByShop = async (req, res) => {
 
-    const {
-        shopId
-    } = req.params;
+    try {
 
-
-    const sql = `
-        SELECT
-            post_id,
-            shop_id,
-            title,
-            description,
-            image,
-            price,
-            created_at
-
-        FROM posts
-
-        WHERE shop_id = ?
-
-        ORDER BY
-            created_at DESC
-    `;
+        const { shopId } = req.params;
 
 
-    db.query(
-        sql,
-        [shopId],
-        (err, results) => {
-
-            if (err) {
-
-                console.error(
-                    "Get shop posts error:",
-                    err
-                );
-
-                return res.status(500).json({
-
-                    message:
-                        "Failed to fetch posts"
-
-                });
-
-            }
+        const result = await db.query(
+            `SELECT post_id, shop_id, title, description, image, price, created_at
+             FROM posts
+             WHERE shop_id = $1
+             ORDER BY created_at DESC`,
+            [shopId]
+        );
 
 
-            res.status(200).json({
+        return res.status(200).json({
+            message: "Posts fetched successfully",
+            posts:   result.rows
+        });
 
-                message:
-                    "Posts fetched successfully",
 
-                posts:
-                    results
+    } catch (error) {
 
+        console.error("Get shop posts error:", error);
+
+        return res.status(500).json({
+            message: "Failed to fetch posts"
+        });
+
+    }
+
+};
+
+
+// ======================================================
+// GET POST BY ID
+// ======================================================
+
+const getPostById = async (req, res) => {
+
+    try {
+
+        const { postId } = req.params;
+
+        const result = await db.query(
+            `SELECT
+                p.post_id,
+                p.shop_id,
+                p.title,
+                p.description,
+                p.image,
+                p.price,
+                p.created_at,
+                s.shop_name,
+                s.category,
+                s.city
+             FROM posts p
+             JOIN shops s ON p.shop_id = s.shop_id
+             WHERE p.post_id = $1`,
+            [postId]
+        );
+
+        if (result.rows.length === 0) {
+
+            return res.status(404).json({
+                message: "Post not found"
             });
 
         }
-    );
+
+        return res.status(200).json({
+            message: "Post fetched successfully",
+            post:    result.rows[0]
+        });
+
+    } catch (error) {
+
+        console.error("Get post by ID error:", error);
+
+        return res.status(500).json({
+            message: "Failed to fetch post"
+        });
+
+    }
 
 };
 
@@ -273,129 +211,60 @@ const getPostsByShop = (req, res) => {
 // UPDATE POST
 // ======================================================
 
-const updatePost = (req, res) => {
+const updatePost = async (req, res) => {
 
-    const {
-        postId
-    } = req.params;
+    try {
 
+        const { postId } = req.params;
 
-    const {
-        title,
-        description,
-        price
-    } = req.body;
+        const { title, description, price } = req.body;
 
 
-    // Check ownership
+        // Check ownership
 
-    const checkSql = `
-        SELECT
-            p.post_id
-
-        FROM posts p
-
-        JOIN shops s
-            ON p.shop_id = s.shop_id
-
-        WHERE p.post_id = ?
-
-        AND s.owner_id = ?
-    `;
+        const checkResult = await db.query(
+            `SELECT p.post_id
+             FROM posts p
+             JOIN shops s ON p.shop_id = s.shop_id
+             WHERE p.post_id = $1
+               AND s.owner_id = $2`,
+            [postId, req.user.userId]
+        );
 
 
-    db.query(
-        checkSql,
-        [
-            postId,
-            req.user.userId
-        ],
-        (err, results) => {
+        if (checkResult.rows.length === 0) {
 
-            if (err) {
-
-                console.error(
-                    "Check post ownership error:",
-                    err
-                );
-
-                return res.status(500).json({
-
-                    message:
-                        "Database error"
-
-                });
-
-            }
-
-
-            if (
-                results.length === 0
-            ) {
-
-                return res.status(403).json({
-
-                    message:
-                        "You are not authorized to update this post"
-
-                });
-
-            }
-
-
-            // Update
-
-            const updateSql = `
-                UPDATE posts
-
-                SET
-                    title = ?,
-                    description = ?,
-                    price = ?
-
-                WHERE post_id = ?
-            `;
-
-
-            db.query(
-                updateSql,
-                [
-                    title,
-                    description,
-                    price || null,
-                    postId
-                ],
-                (err) => {
-
-                    if (err) {
-
-                        console.error(
-                            "Update post error:",
-                            err
-                        );
-
-                        return res.status(500).json({
-
-                            message:
-                                "Failed to update post"
-
-                        });
-
-                    }
-
-
-                    res.status(200).json({
-
-                        message:
-                            "Post updated successfully"
-
-                    });
-
-                }
-            );
+            return res.status(403).json({
+                message: "You are not authorized to update this post"
+            });
 
         }
-    );
+
+
+        await db.query(
+            `UPDATE posts
+             SET title       = $1,
+                 description = $2,
+                 price       = $3
+             WHERE post_id = $4`,
+            [title, description, price || null, postId]
+        );
+
+
+        return res.status(200).json({
+            message: "Post updated successfully"
+        });
+
+
+    } catch (error) {
+
+        console.error("Update post error:", error);
+
+        return res.status(500).json({
+            message: "Failed to update post"
+        });
+
+    }
 
 };
 
@@ -404,109 +273,62 @@ const updatePost = (req, res) => {
 // DELETE POST
 // ======================================================
 
-const deletePost = (req, res) => {
+const deletePost = async (req, res) => {
 
-    const {
-        postId
-    } = req.params;
+    try {
 
-
-    // Check ownership
-
-    const checkSql = `
-        SELECT
-            p.post_id
-
-        FROM posts p
-
-        JOIN shops s
-            ON p.shop_id = s.shop_id
-
-        WHERE p.post_id = ?
-
-        AND s.owner_id = ?
-    `;
+        const { postId } = req.params;
 
 
-    db.query(
-        checkSql,
-        [
-            postId,
-            req.user.userId
-        ],
-        (err, results) => {
+        // Check ownership
 
-            if (err) {
-
-                console.error(
-                    "Check delete ownership error:",
-                    err
-                );
-
-                return res.status(500).json({
-
-                    message:
-                        "Database error"
-
-                });
-
-            }
+        const checkResult = await db.query(
+            `SELECT p.post_id
+             FROM posts p
+             JOIN shops s ON p.shop_id = s.shop_id
+             WHERE p.post_id = $1
+               AND s.owner_id = $2`,
+            [postId, req.user.userId]
+        );
 
 
-            if (
-                results.length === 0
-            ) {
+        if (checkResult.rows.length === 0) {
 
-                return res.status(403).json({
-
-                    message:
-                        "You are not authorized to delete this post"
-
-                });
-
-            }
-
-
-            const deleteSql = `
-                DELETE FROM posts
-                WHERE post_id = ?
-            `;
-
-
-            db.query(
-                deleteSql,
-                [postId],
-                (err) => {
-
-                    if (err) {
-
-                        console.error(
-                            "Delete post error:",
-                            err
-                        );
-
-                        return res.status(500).json({
-
-                            message:
-                                "Failed to delete post"
-
-                        });
-
-                    }
-
-
-                    res.status(200).json({
-
-                        message:
-                            "Post deleted successfully"
-
-                    });
-
-                }
-            );
+            return res.status(403).json({
+                message: "You are not authorized to delete this post"
+            });
 
         }
-    );
+
+
+        // Delete interests first
+
+        await db.query(
+            `DELETE FROM post_interests WHERE post_id = $1`,
+            [postId]
+        );
+
+
+        await db.query(
+            `DELETE FROM posts WHERE post_id = $1`,
+            [postId]
+        );
+
+
+        return res.status(200).json({
+            message: "Post deleted successfully"
+        });
+
+
+    } catch (error) {
+
+        console.error("Delete post error:", error);
+
+        return res.status(500).json({
+            message: "Failed to delete post"
+        });
+
+    }
 
 };
 
@@ -515,186 +337,83 @@ const deletePost = (req, res) => {
 // ADD INTEREST
 // ======================================================
 
-const addInterest = (req, res) => {
+const addInterest = async (req, res) => {
 
-    const {
-        postId
-    } = req.params;
+    try {
 
+        const { postId } = req.params;
 
-    const userId =
-        req.user.userId;
+        const userId = req.user.userId;
 
 
-    // Check if post exists
+        // Check post exists
 
-    const postSql = `
-        SELECT post_id
-        FROM posts
-        WHERE post_id = ?
-    `;
+        const postResult = await db.query(
+            `SELECT post_id FROM posts WHERE post_id = $1`,
+            [postId]
+        );
 
 
-    db.query(
-        postSql,
-        [postId],
-        (err, postResults) => {
+        if (postResult.rows.length === 0) {
 
-            if (err) {
-
-                console.error(
-                    "Check post error:",
-                    err
-                );
-
-                return res.status(500).json({
-
-                    message:
-                        "Database error"
-
-                });
-
-            }
-
-
-            if (
-                postResults.length === 0
-            ) {
-
-                return res.status(404).json({
-
-                    message:
-                        "Post not found"
-
-                });
-
-            }
-
-
-            // Check existing interest
-
-            const checkSql = `
-                SELECT
-                    interest_id
-
-                FROM post_interests
-
-                WHERE post_id = ?
-
-                AND user_id = ?
-            `;
-
-
-            db.query(
-                checkSql,
-                [
-                    postId,
-                    userId
-                ],
-                (err, results) => {
-
-                    if (err) {
-
-                        console.error(
-                            "Check interest error:",
-                            err
-                        );
-
-                        return res.status(500).json({
-
-                            message:
-                                "Database error"
-
-                        });
-
-                    }
-
-
-                    if (
-                        results.length > 0
-                    ) {
-
-                        return res.status(400).json({
-
-                            message:
-                                "You are already interested in this post"
-
-                        });
-
-                    }
-
-
-                    // Insert interest
-
-                    const insertSql = `
-                        INSERT INTO post_interests
-                        (
-                            post_id,
-                            user_id
-                        )
-                        VALUES (?, ?)
-                    `;
-
-
-                    db.query(
-                        insertSql,
-                        [
-                            postId,
-                            userId
-                        ],
-                        (err, result) => {
-
-                            if (err) {
-
-                                console.error(
-                                    "Insert interest error:",
-                                    err
-                                );
-
-
-                                if (
-                                    err.code ===
-                                    "ER_DUP_ENTRY"
-                                ) {
-
-                                    return res.status(400).json({
-
-                                        message:
-                                            "You are already interested in this post"
-
-                                    });
-
-                                }
-
-
-                                return res.status(500).json({
-
-                                    message:
-                                        "Failed to add interest"
-
-                                });
-
-                            }
-
-
-                            res.status(201).json({
-
-                                message:
-                                    "Interest added successfully",
-
-                                interestId:
-                                    result.insertId
-
-                            });
-
-                        }
-                    );
-
-                }
-            );
+            return res.status(404).json({
+                message: "Post not found"
+            });
 
         }
-    );
+
+
+        // Check existing interest
+
+        const checkResult = await db.query(
+            `SELECT interest_id FROM post_interests WHERE post_id = $1 AND user_id = $2`,
+            [postId, userId]
+        );
+
+
+        if (checkResult.rows.length > 0) {
+
+            return res.status(400).json({
+                message: "You are already interested in this post"
+            });
+
+        }
+
+
+        // Insert interest
+
+        const insertResult = await db.query(
+            `INSERT INTO post_interests (post_id, user_id)
+             VALUES ($1, $2)
+             RETURNING interest_id`,
+            [postId, userId]
+        );
+
+
+        return res.status(201).json({
+            message:    "Interest added successfully",
+            interestId: insertResult.rows[0].interest_id
+        });
+
+
+    } catch (error) {
+
+        console.error("Add interest error:", error);
+
+        // Postgres unique violation code
+        if (error.code === "23505") {
+
+            return res.status(400).json({
+                message: "You are already interested in this post"
+            });
+
+        }
+
+        return res.status(500).json({
+            message: "Failed to add interest"
+        });
+
+    }
 
 };
 
@@ -703,74 +422,44 @@ const addInterest = (req, res) => {
 // REMOVE INTEREST
 // ======================================================
 
-const removeInterest = (req, res) => {
+const removeInterest = async (req, res) => {
 
-    const {
-        postId
-    } = req.params;
+    try {
 
+        const { postId } = req.params;
 
-    const userId =
-        req.user.userId;
+        const userId = req.user.userId;
 
 
-    const sql = `
-        DELETE FROM post_interests
-
-        WHERE post_id = ?
-
-        AND user_id = ?
-    `;
+        const result = await db.query(
+            `DELETE FROM post_interests WHERE post_id = $1 AND user_id = $2`,
+            [postId, userId]
+        );
 
 
-    db.query(
-        sql,
-        [
-            postId,
-            userId
-        ],
-        (err, result) => {
+        if (result.rowCount === 0) {
 
-            if (err) {
-
-                console.error(
-                    "Remove interest error:",
-                    err
-                );
-
-                return res.status(500).json({
-
-                    message:
-                        "Failed to remove interest"
-
-                });
-
-            }
-
-
-            if (
-                result.affectedRows === 0
-            ) {
-
-                return res.status(404).json({
-
-                    message:
-                        "Interest not found"
-
-                });
-
-            }
-
-
-            res.status(200).json({
-
-                message:
-                    "Interest removed successfully"
-
+            return res.status(404).json({
+                message: "Interest not found"
             });
 
         }
-    );
+
+
+        return res.status(200).json({
+            message: "Interest removed successfully"
+        });
+
+
+    } catch (error) {
+
+        console.error("Remove interest error:", error);
+
+        return res.status(500).json({
+            message: "Failed to remove interest"
+        });
+
+    }
 
 };
 
@@ -779,56 +468,33 @@ const removeInterest = (req, res) => {
 // GET INTEREST COUNT
 // ======================================================
 
-const getInterestCount = (req, res) => {
+const getInterestCount = async (req, res) => {
 
-    const {
-        postId
-    } = req.params;
+    try {
 
-
-    const sql = `
-        SELECT
-            COUNT(*) AS interestCount
-
-        FROM post_interests
-
-        WHERE post_id = ?
-    `;
+        const { postId } = req.params;
 
 
-    db.query(
-        sql,
-        [postId],
-        (err, results) => {
-
-            if (err) {
-
-                console.error(
-                    "Interest count error:",
-                    err
-                );
-
-                return res.status(500).json({
-
-                    message:
-                        "Failed to get interest count"
-
-                });
-
-            }
+        const result = await db.query(
+            `SELECT COUNT(*) AS interestcount FROM post_interests WHERE post_id = $1`,
+            [postId]
+        );
 
 
-            res.status(200).json({
+        return res.status(200).json({
+            interestCount: Number(result.rows[0].interestcount)
+        });
 
-                interestCount:
-                    Number(
-                        results[0].interestCount
-                    )
 
-            });
+    } catch (error) {
 
-        }
-    );
+        console.error("Interest count error:", error);
+
+        return res.status(500).json({
+            message: "Failed to get interest count"
+        });
+
+    }
 
 };
 
@@ -837,63 +503,35 @@ const getInterestCount = (req, res) => {
 // GET INTEREST STATUS
 // ======================================================
 
-const getInterestStatus = (req, res) => {
+const getInterestStatus = async (req, res) => {
 
-    const {
-        postId
-    } = req.params;
+    try {
 
+        const { postId } = req.params;
 
-    const userId =
-        req.user.userId;
+        const userId = req.user.userId;
 
 
-    const sql = `
-        SELECT
-            interest_id
-
-        FROM post_interests
-
-        WHERE post_id = ?
-
-        AND user_id = ?
-    `;
+        const result = await db.query(
+            `SELECT interest_id FROM post_interests WHERE post_id = $1 AND user_id = $2`,
+            [postId, userId]
+        );
 
 
-    db.query(
-        sql,
-        [
-            postId,
-            userId
-        ],
-        (err, results) => {
-
-            if (err) {
-
-                console.error(
-                    "Interest status error:",
-                    err
-                );
-
-                return res.status(500).json({
-
-                    message:
-                        "Failed to check interest status"
-
-                });
-
-            }
+        return res.status(200).json({
+            interested: result.rows.length > 0
+        });
 
 
-            res.status(200).json({
+    } catch (error) {
 
-                interested:
-                    results.length > 0
+        console.error("Interest status error:", error);
 
-            });
+        return res.status(500).json({
+            message: "Failed to check interest status"
+        });
 
-        }
-    );
+    }
 
 };
 
@@ -903,23 +541,14 @@ const getInterestStatus = (req, res) => {
 // ======================================================
 
 module.exports = {
-
     createPost,
-
+    getPostById,
     getPostsByShop,
-
     getAllPosts,
-
     updatePost,
-
     deletePost,
-
     addInterest,
-
     removeInterest,
-
     getInterestCount,
-
     getInterestStatus
-
 };

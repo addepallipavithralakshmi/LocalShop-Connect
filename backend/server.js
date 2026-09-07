@@ -1,29 +1,46 @@
 const express = require("express");
-const cors = require("cors");
-const path = require("path");
+const cors    = require("cors");
+const path    = require("path");
 
 require("dotenv").config();
 
 require("./config/db");
 
-const authRoutes =
-    require("./routes/authRoutes");
+const authRoutes = require("./routes/authRoutes");
+const shopRoutes = require("./routes/shopRoutes");
+const postRoutes = require("./routes/postRoutes");
 
-const shopRoutes =
-    require("./routes/shopRoutes");
+const app = express();
 
-const postRoutes =
-    require("./routes/postRoutes");
 
-const app =
-    express();
+// ========================================
+// CORS — restrict to frontend origin
+// ========================================
+
+const allowedOrigins = [
+    ...new Set([
+        process.env.FRONTEND_URL,
+        "http://localhost:5173",   // Vite dev default
+        "http://localhost:4173"    // Vite preview default
+    ].filter(Boolean))
+];
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            // allow server-to-server / curl (no origin header)
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.includes(origin)) return callback(null, true);
+            callback(new Error(`CORS: origin ${origin} not allowed`));
+        },
+        credentials: true
+    })
+);
 
 
 // ========================================
 // MIDDLEWARE
 // ========================================
-
-app.use(cors());
 
 app.use(express.json());
 
@@ -34,12 +51,7 @@ app.use(express.json());
 
 app.use(
     "/uploads",
-    express.static(
-        path.join(
-            __dirname,
-            "uploads"
-        )
-    )
+    express.static(path.join(__dirname, "uploads"))
 );
 
 
@@ -47,66 +59,27 @@ app.use(
 // ROUTES
 // ========================================
 
-app.use(
-    "/api/auth",
-    authRoutes
-);
-
-app.use(
-    "/api/shops",
-    shopRoutes
-);
-
-app.use(
-    "/api/posts",
-    postRoutes
-);
+app.use("/api/auth",  authRoutes);
+app.use("/api/shops", shopRoutes);
+app.use("/api/posts", postRoutes);
 
 
 // ========================================
-// TEST
+// HEALTH CHECK
 // ========================================
 
-app.get(
-    "/",
-    (req, res) => {
-
-        res.send(
-            "Welcome to LocalShop Connect API"
-        );
-
-    }
-);
+app.get("/", (req, res) => {
+    res.json({ status: "ok", message: "LocalShop Connect API is running" });
+});
 
 
 // ========================================
 // SERVER
 // ========================================
 
-// const PORT =
-//     process.env.PORT || 5000;
-
-// app.listen(
-//     PORT,
-//     () => {
-
-//         console.log(
-//             `Server running on http://localhost:${PORT}`
-//         );
-
-//     }
-// );
-
 const PORT = process.env.PORT || 5000;
 
-app.listen(
-    PORT,
-    "0.0.0.0",
-    () => {
-
-        console.log(
-            `Server running on port ${PORT}`
-        );
-
-    }
-);
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`   Allowed origins: ${allowedOrigins.join(", ")}`);
+});

@@ -18,6 +18,7 @@ import Posts from "./pages/Posts";
 import CreateShop from "./pages/CreateShop";
 import CreatePost from "./pages/CreatePost";
 import Dashboard from "./pages/Dashboard";
+import EditPost from "./pages/EditPost";
 
 // ========================================
 // COMPONENTS
@@ -144,6 +145,16 @@ function App() {
                 <Route
                     path="/dashboard"
                     element={<Dashboard />}
+                />
+
+
+                {/* ======================================== */}
+                {/* EDIT POST */}
+                {/* ======================================== */}
+
+                <Route
+                    path="/edit-post/:postId"
+                    element={<EditPost />}
                 />
 
 

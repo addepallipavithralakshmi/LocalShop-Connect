@@ -5,36 +5,15 @@ const db = require("../config/db");
 // CREATE SHOP
 // ========================================
 
-const createShop = (req, res) => {
+const createShop = async (req, res) => {
 
     try {
 
-        console.log(
-            "Create shop request received"
-        );
+        console.log("Create shop request received");
+        console.log("User:", req.user);
+        console.log("Body:", req.body);
+        console.log("File:", req.file);
 
-
-        console.log(
-            "User:",
-            req.user
-        );
-
-
-        console.log(
-            "Body:",
-            req.body
-        );
-
-
-        console.log(
-            "File:",
-            req.file
-        );
-
-
-        // ========================================
-        // GET FORM DATA
-        // ========================================
 
         const {
             shop_name,
@@ -46,243 +25,87 @@ const createShop = (req, res) => {
         } = req.body;
 
 
-        // ========================================
-        // VALIDATION
-        // ========================================
+        // Validation
 
-        if (
-            !shop_name ||
-            !address ||
-            !city ||
-            !phone ||
-            !category
-        ) {
+        if (!shop_name || !address || !city || !phone || !category) {
 
             return res.status(400).json({
-
-                message:
-                    "Please fill all required fields"
-
+                message: "Please fill all required fields"
             });
 
         }
 
 
-        // ========================================
-        // CHECK USER
-        // ========================================
-
-        if (
-            !req.user ||
-            !req.user.userId
-        ) {
+        if (!req.user || !req.user.userId) {
 
             return res.status(401).json({
-
-                message:
-                    "Authentication required"
-
+                message: "Authentication required"
             });
 
         }
 
 
-        const ownerId =
-            req.user.userId;
+        const ownerId = req.user.userId;
+
+        const shopImage = req.file ? req.file.filename : null;
 
 
-        // ========================================
-        // SHOP IMAGE
-        // ========================================
+        // Check if user already has a shop
 
-        let shopImage = null;
+        const checkResult = await db.query(
+            `SELECT shop_id FROM shops WHERE owner_id = $1`,
+            [ownerId]
+        );
 
 
-        if (req.file) {
+        if (checkResult.rows.length > 0) {
 
-            shopImage =
-                req.file.filename;
+            return res.status(400).json({
+                message: "You already have a shop"
+            });
 
         }
 
 
-        // ========================================
-        // CHECK WHETHER USER ALREADY HAS SHOP
-        // ========================================
-
-        const checkShopSql = `
-
-            SELECT shop_id
-
-            FROM shops
-
-            WHERE owner_id = ?
-
-        `;
-
-
-        db.query(
-
-            checkShopSql,
-
-            [ownerId],
-
-            (err, results) => {
-
-                if (err) {
-
-                    console.error(
-                        "Check existing shop error:",
-                        err
-                    );
-
-
-                    return res.status(500).json({
-
-                        message:
-                            "Database error while checking shop",
-
-                        error:
-                            err.message
-
-                    });
-
-                }
-
-
-                // ========================================
-                // USER ALREADY HAS SHOP
-                // ========================================
-
-                if (
-                    results.length > 0
-                ) {
-
-                    return res.status(400).json({
-
-                        message:
-                            "You already have a shop"
-
-                    });
-
-                }
-
-
-                // ========================================
-                // INSERT SHOP
-                // ========================================
-
-                const insertSql = `
-
-                    INSERT INTO shops
-                    (
-                        owner_id,
-                        shop_name,
-                        description,
-                        address,
-                        city,
-                        phone,
-                        category,
-                        shop_image
-                    )
-
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-
-                `;
-
-
-                db.query(
-
-                    insertSql,
-
-                    [
-
-                        ownerId,
-
-                        shop_name.trim(),
-
-                        description
-                            ? description.trim()
-                            : null,
-
-                        address.trim(),
-
-                        city.trim(),
-
-                        phone.trim(),
-
-                        category,
-
-                        shopImage
-
-                    ],
-
-                    (err, result) => {
-
-                        if (err) {
-
-                            console.error(
-                                "Create shop database error:",
-                                err
-                            );
-
-
-                            return res.status(500).json({
-
-                                message:
-                                    "Failed to create shop",
-
-                                error:
-                                    err.message
-
-                            });
-
-                        }
-
-
-                        console.log(
-                            "Shop created:",
-                            result.insertId
-                        );
-
-
-                        return res.status(201).json({
-
-                            message:
-                                "Shop created successfully",
-
-                            shopId:
-                                result.insertId,
-
-                            shopImage:
-                                shopImage
-
-                        });
-
-                    }
-
-                );
-
-            }
-
+        // Insert shop
+
+        const insertResult = await db.query(
+            `INSERT INTO shops
+                (owner_id, shop_name, description, address, city, phone, category, shop_image)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING shop_id`,
+            [
+                ownerId,
+                shop_name.trim(),
+                description ? description.trim() : null,
+                address.trim(),
+                city.trim(),
+                phone.trim(),
+                category,
+                shopImage
+            ]
         );
+
+
+        const shopId = insertResult.rows[0].shop_id;
+
+        console.log("Shop created:", shopId);
+
+
+        return res.status(201).json({
+            message:   "Shop created successfully",
+            shopId:    shopId,
+            shopImage: shopImage
+        });
+
 
     } catch (error) {
 
-        console.error(
-            "Create shop unexpected error:",
-            error
-        );
-
+        console.error("Create shop unexpected error:", error);
 
         return res.status(500).json({
-
-            message:
-                "Server error while creating shop",
-
-            error:
-                error.message
-
+            message: "Server error while creating shop",
+            error:   error.message
         });
 
     }
@@ -294,154 +117,54 @@ const createShop = (req, res) => {
 // GET ALL SHOPS
 // ========================================
 
-const getAllShops = (req, res) => {
+const getAllShops = async (req, res) => {
 
-    const {
-        search,
-        city,
-        category
-    } = req.query;
+    try {
 
+        const { search, city, category } = req.query;
 
-    let sql = `
-
-        SELECT
-            shop_id,
-            owner_id,
-            shop_name,
-            description,
-            address,
-            city,
-            phone,
-            category,
-            shop_image
-
-        FROM shops
-
-        WHERE 1 = 1
-
-    `;
+        let sql    = `SELECT shop_id, owner_id, shop_name, description, address, city, phone, category, shop_image FROM shops WHERE 1 = 1`;
+        const values = [];
+        let   idx    = 1;
 
 
-    const values = [];
-
-
-    // ========================================
-    // SEARCH
-    // ========================================
-
-    if (search) {
-
-        sql += `
-
-            AND shop_name LIKE ?
-
-        `;
-
-
-        values.push(
-            `%${search}%`
-        );
-
-    }
-
-
-    // ========================================
-    // CITY
-    // ========================================
-
-    if (city) {
-
-        sql += `
-
-            AND city LIKE ?
-
-        `;
-
-
-        values.push(
-            `%${city}%`
-        );
-
-    }
-
-
-    // ========================================
-    // CATEGORY
-    // ========================================
-
-    if (
-        category &&
-        category !== "All"
-    ) {
-
-        sql += `
-
-            AND category = ?
-
-        `;
-
-
-        values.push(
-            category
-        );
-
-    }
-
-
-    // ========================================
-    // ORDER
-    // ========================================
-
-    sql += `
-
-        ORDER BY shop_id DESC
-
-    `;
-
-
-    db.query(
-
-        sql,
-
-        values,
-
-        (err, results) => {
-
-            if (err) {
-
-                console.error(
-                    "Get all shops error:",
-                    err
-                );
-
-
-                return res.status(500).json({
-
-                    message:
-                        "Failed to fetch shops",
-
-                    error:
-                        err.message
-
-                });
-
-            }
-
-
-            return res.status(200).json({
-
-                message:
-                    "Shops fetched successfully",
-
-                shops:
-                    results
-
-            });
-
+        if (search) {
+            sql += ` AND shop_name ILIKE $${idx++}`;
+            values.push(`%${search}%`);
         }
 
-    );
+        if (city) {
+            sql += ` AND city ILIKE $${idx++}`;
+            values.push(`%${city}%`);
+        }
+
+        if (category && category !== "All") {
+            sql += ` AND category = $${idx++}`;
+            values.push(category);
+        }
+
+        sql += ` ORDER BY shop_id DESC`;
+
+
+        const result = await db.query(sql, values);
+
+
+        return res.status(200).json({
+            message: "Shops fetched successfully",
+            shops:   result.rows
+        });
+
+
+    } catch (error) {
+
+        console.error("Get all shops error:", error);
+
+        return res.status(500).json({
+            message: "Failed to fetch shops",
+            error:   error.message
+        });
+
+    }
 
 };
 
@@ -450,619 +173,331 @@ const getAllShops = (req, res) => {
 // GET SHOP BY ID
 // ========================================
 
-// ======================================================
-// GET SHOP BY ID
-// ======================================================
+const getShopById = async (req, res) => {
 
-const getShopById = (req, res) => {
+    try {
 
-    const shopId = req.params.shopId;
+        const shopId = req.params.shopId;
 
-    console.log(
-        "Requested Shop ID:",
-        shopId
-    );
-
-    const sql = `
-        SELECT
-            shop_id,
-            owner_id,
-            shop_name,
-            category,
-            description,
-            address,
-            city,
-            phone,
-            shop_image
-        FROM shops
-        WHERE shop_id = ?
-    `;
-
-    db.query(
-        sql,
-        [shopId],
-        (err, results) => {
-
-            if (err) {
-
-                console.error(
-                    "Get shop by ID error:",
-                    err
-                );
-
-                return res.status(500).json({
-
-                    message:
-                        "Database error while fetching shop"
-
-                });
-
-            }
-
-            console.log(
-                "Shop query result:",
-                results
-            );
+        console.log("Requested Shop ID:", shopId);
 
 
-            if (
-                results.length === 0
-            ) {
-
-                return res.status(404).json({
-
-                    message:
-                        "Shop not found"
-
-                });
-
-            }
+        const result = await db.query(
+            `SELECT shop_id, owner_id, shop_name, category, description, address, city, phone, shop_image
+             FROM shops
+             WHERE shop_id = $1`,
+            [shopId]
+        );
 
 
-            return res.status(200).json({
+        if (result.rows.length === 0) {
 
-                message:
-                    "Shop fetched successfully",
-
-                shop:
-                    results[0]
-
+            return res.status(404).json({
+                message: "Shop not found"
             });
 
         }
-    );
+
+
+        return res.status(200).json({
+            message: "Shop fetched successfully",
+            shop:    result.rows[0]
+        });
+
+
+    } catch (error) {
+
+        console.error("Get shop by ID error:", error);
+
+        return res.status(500).json({
+            message: "Database error while fetching shop"
+        });
+
+    }
 
 };
+
 
 // ========================================
 // GET MY SHOP
 // ========================================
 
-const getMyShop = (req, res) => {
+const getMyShop = async (req, res) => {
 
-    // ========================================
-    // CHECK TOKEN
-    // ========================================
+    try {
 
-    if (
-        !req.user ||
-        !req.user.userId
-    ) {
+        if (!req.user || !req.user.userId) {
 
-        return res.status(401).json({
-
-            message:
-                "Authentication required"
-
-        });
-
-    }
-
-
-    const ownerId =
-        req.user.userId;
-
-
-    const sql = `
-
-        SELECT
-            shop_id,
-            owner_id,
-            shop_name,
-            description,
-            address,
-            city,
-            phone,
-            category,
-            shop_image
-
-        FROM shops
-
-        WHERE owner_id = ?
-
-    `;
-
-
-    db.query(
-
-        sql,
-
-        [ownerId],
-
-        (err, results) => {
-
-            if (err) {
-
-                console.error(
-                    "Get my shop error:",
-                    err
-                );
-
-
-                return res.status(500).json({
-
-                    message:
-                        "Failed to fetch your shop",
-
-                    error:
-                        err.message
-
-                });
-
-            }
-
-
-            // ========================================
-            // USER HAS NO SHOP
-            // ========================================
-
-            if (
-                results.length === 0
-            ) {
-
-                return res.status(404).json({
-
-                    message:
-                        "You have not created a shop yet"
-
-                });
-
-            }
-
-
-            return res.status(200).json({
-
-                message:
-                    "Shop fetched successfully",
-
-                shop:
-                    results[0]
-
+            return res.status(401).json({
+                message: "Authentication required"
             });
 
         }
 
-    );
 
-};
-
-// ======================================================
-// DELETE MY SHOP
-// ======================================================
-
-const deleteMyShop = (req, res) => {
-
-    const ownerId = req.user.userId;
-
-    // First find the owner's shop
-    const findShopSql = `
-        SELECT shop_id
-        FROM shops
-        WHERE owner_id = ?
-    `;
-
-    db.query(
-        findShopSql,
-        [ownerId],
-        (err, shopResults) => {
-
-            if (err) {
-
-                console.error(
-                    "Find shop for deletion error:",
-                    err
-                );
-
-                return res.status(500).json({
-                    message: "Database error"
-                });
-            }
-
-            if (shopResults.length === 0) {
-
-                return res.status(404).json({
-                    message: "You do not have a shop"
-                });
-            }
-
-            const shopId =
-                shopResults[0].shop_id;
+        const ownerId = req.user.userId;
 
 
-            // ------------------------------------------
-            // Delete interests related to posts
-            // ------------------------------------------
-
-            const deleteInterestsSql = `
-                DELETE pi
-                FROM post_interests pi
-                INNER JOIN posts p
-                    ON pi.post_id = p.post_id
-                WHERE p.shop_id = ?
-            `;
-
-            db.query(
-                deleteInterestsSql,
-                [shopId],
-                (err) => {
-
-                    if (err) {
-
-                        console.error(
-                            "Delete shop interests error:",
-                            err
-                        );
-
-                        return res.status(500).json({
-                            message:
-                                "Failed to delete shop interests"
-                        });
-                    }
+        const result = await db.query(
+            `SELECT shop_id, owner_id, shop_name, description, address, city, phone, category, shop_image
+             FROM shops
+             WHERE owner_id = $1`,
+            [ownerId]
+        );
 
 
-                    // ------------------------------------------
-                    // Delete posts
-                    // ------------------------------------------
+        if (result.rows.length === 0) {
 
-                    const deletePostsSql = `
-                        DELETE FROM posts
-                        WHERE shop_id = ?
-                    `;
-
-                    db.query(
-                        deletePostsSql,
-                        [shopId],
-                        (err) => {
-
-                            if (err) {
-
-                                console.error(
-                                    "Delete shop posts error:",
-                                    err
-                                );
-
-                                return res.status(500).json({
-                                    message:
-                                        "Failed to delete shop posts"
-                                });
-                            }
-
-
-                            // ------------------------------------------
-                            // Delete shop
-                            // ------------------------------------------
-
-                            const deleteShopSql = `
-                                DELETE FROM shops
-                                WHERE shop_id = ?
-                                AND owner_id = ?
-                            `;
-
-                            db.query(
-                                deleteShopSql,
-                                [
-                                    shopId,
-                                    ownerId
-                                ],
-                                (err, result) => {
-
-                                    if (err) {
-
-                                        console.error(
-                                            "Delete shop error:",
-                                            err
-                                        );
-
-                                        return res.status(500).json({
-                                            message:
-                                                "Failed to delete shop"
-                                        });
-                                    }
-
-
-                                    if (
-                                        result.affectedRows === 0
-                                    ) {
-
-                                        return res.status(403).json({
-                                            message:
-                                                "You are not authorized to delete this shop"
-                                        });
-                                    }
-
-
-                                    res.status(200).json({
-
-                                        message:
-                                            "Shop deleted successfully",
-
-                                        shopId:
-                                            shopId
-
-                                    });
-
-                                }
-                            );
-
-                        }
-                    );
-
-                }
-            );
+            return res.status(404).json({
+                message: "You have not created a shop yet"
+            });
 
         }
-    );
+
+
+        return res.status(200).json({
+            message: "Shop fetched successfully",
+            shop:    result.rows[0]
+        });
+
+
+    } catch (error) {
+
+        console.error("Get my shop error:", error);
+
+        return res.status(500).json({
+            message: "Failed to fetch your shop",
+            error:   error.message
+        });
+
+    }
+
 };
 
-// ======================================================
+
+// ========================================
 // UPDATE MY SHOP
-// ======================================================
+// ========================================
 
-const updateMyShop = (req, res) => {
+const updateMyShop = async (req, res) => {
 
-    const ownerId = req.user.userId;
+    try {
 
-    const {
-        shop_name,
-        category,
-        description,
-        address,
-        city,
-        phone
-    } = req.body;
+        const ownerId = req.user.userId;
 
+        const {
+            shop_name,
+            category,
+            description,
+            address,
+            city,
+            phone
+        } = req.body;
 
-    // ========================================
-    // VALIDATION
-    // ========================================
 
-    if (!shop_name || !shop_name.trim()) {
+        if (!shop_name || !shop_name.trim()) {
+            return res.status(400).json({ message: "Shop name is required" });
+        }
 
-        return res.status(400).json({
-            message: "Shop name is required"
-        });
+        if (!category || !category.trim()) {
+            return res.status(400).json({ message: "Category is required" });
+        }
 
-    }
+        if (!address || !address.trim()) {
+            return res.status(400).json({ message: "Address is required" });
+        }
 
+        if (!city || !city.trim()) {
+            return res.status(400).json({ message: "City is required" });
+        }
 
-    if (!category || !category.trim()) {
+        if (!phone || !phone.trim()) {
+            return res.status(400).json({ message: "Phone number is required" });
+        }
 
-        return res.status(400).json({
-            message: "Category is required"
-        });
 
-    }
+        // Check shop exists
 
+        const checkResult = await db.query(
+            `SELECT shop_id FROM shops WHERE owner_id = $1`,
+            [ownerId]
+        );
 
-    if (!address || !address.trim()) {
 
-        return res.status(400).json({
-            message: "Address is required"
-        });
+        if (checkResult.rows.length === 0) {
 
-    }
-
-
-    if (!city || !city.trim()) {
-
-        return res.status(400).json({
-            message: "City is required"
-        });
-
-    }
-
-
-    if (!phone || !phone.trim()) {
-
-        return res.status(400).json({
-            message: "Phone number is required"
-        });
-
-    }
-
-
-    // ========================================
-    // CHECK SHOP
-    // ========================================
-
-    const checkSql = `
-        SELECT shop_id
-        FROM shops
-        WHERE owner_id = ?
-    `;
-
-
-    db.query(
-        checkSql,
-        [ownerId],
-        (err, results) => {
-
-            if (err) {
-
-                console.error(
-                    "Check shop error:",
-                    err
-                );
-
-                return res.status(500).json({
-                    message: "Database error"
-                });
-
-            }
-
-
-            if (results.length === 0) {
-
-                return res.status(404).json({
-                    message:
-                        "You do not have a shop"
-                });
-
-            }
-
-
-            const shopId =
-                results[0].shop_id;
-
-
-            // ========================================
-            // UPDATE SHOP
-            // ========================================
-
-            const updateSql = `
-                UPDATE shops
-                SET
-                    shop_name = ?,
-                    category = ?,
-                    description = ?,
-                    address = ?,
-                    city = ?,
-                    phone = ?
-                WHERE
-                    shop_id = ?
-                    AND owner_id = ?
-            `;
-
-
-            db.query(
-                updateSql,
-                [
-                    shop_name.trim(),
-                    category.trim(),
-                    description
-                        ? description.trim()
-                        : null,
-                    address.trim(),
-                    city.trim(),
-                    phone.trim(),
-                    shopId,
-                    ownerId
-                ],
-                (err, result) => {
-
-                    if (err) {
-
-                        console.error(
-                            "Update shop error:",
-                            err
-                        );
-
-                        return res.status(500).json({
-                            message:
-                                "Failed to update shop"
-                        });
-
-                    }
-
-
-                    if (
-                        result.affectedRows === 0
-                    ) {
-
-                        return res.status(403).json({
-                            message:
-                                "You are not authorized to update this shop"
-                        });
-
-                    }
-
-
-                    // ========================================
-                    // GET UPDATED SHOP
-                    // ========================================
-
-                    const getSql = `
-                        SELECT
-                            shop_id,
-                            owner_id,
-                            shop_name,
-                            category,
-                            description,
-                            address,
-                            city,
-                            phone,
-                            shop_image
-                        FROM shops
-                        WHERE shop_id = ?
-                    `;
-
-
-                    db.query(
-                        getSql,
-                        [shopId],
-                        (err, updatedResults) => {
-
-                            if (err) {
-
-                                console.error(
-                                    "Get updated shop error:",
-                                    err
-                                );
-
-                                return res.status(500).json({
-                                    message:
-                                        "Shop updated but failed to fetch updated data"
-                                });
-
-                            }
-
-
-                            return res.status(200).json({
-
-                                message:
-                                    "Shop updated successfully",
-
-                                shop:
-                                    updatedResults[0]
-
-                            });
-
-                        }
-                    );
-
-                }
-            );
+            return res.status(404).json({
+                message: "You do not have a shop"
+            });
 
         }
-    );
+
+
+        const shopId = checkResult.rows[0].shop_id;
+
+
+        // Update
+
+        const updateResult = await db.query(
+            `UPDATE shops
+             SET shop_name   = $1,
+                 category    = $2,
+                 description = $3,
+                 address     = $4,
+                 city        = $5,
+                 phone       = $6
+             WHERE shop_id = $7
+               AND owner_id = $8
+             RETURNING shop_id`,
+            [
+                shop_name.trim(),
+                category.trim(),
+                description ? description.trim() : null,
+                address.trim(),
+                city.trim(),
+                phone.trim(),
+                shopId,
+                ownerId
+            ]
+        );
+
+
+        if (updateResult.rowCount === 0) {
+
+            return res.status(403).json({
+                message: "You are not authorized to update this shop"
+            });
+
+        }
+
+
+        // Return updated shop
+
+        const getResult = await db.query(
+            `SELECT shop_id, owner_id, shop_name, category, description, address, city, phone, shop_image
+             FROM shops
+             WHERE shop_id = $1`,
+            [shopId]
+        );
+
+
+        return res.status(200).json({
+            message: "Shop updated successfully",
+            shop:    getResult.rows[0]
+        });
+
+
+    } catch (error) {
+
+        console.error("Update shop error:", error);
+
+        return res.status(500).json({
+            message: "Failed to update shop"
+        });
+
+    }
 
 };
+
+
+// ========================================
+// DELETE MY SHOP
+// ========================================
+
+const deleteMyShop = async (req, res) => {
+
+    try {
+
+        const ownerId = req.user.userId;
+
+
+        // Find shop
+
+        const shopResult = await db.query(
+            `SELECT shop_id FROM shops WHERE owner_id = $1`,
+            [ownerId]
+        );
+
+
+        if (shopResult.rows.length === 0) {
+
+            return res.status(404).json({
+                message: "You do not have a shop"
+            });
+
+        }
+
+
+        const shopId = shopResult.rows[0].shop_id;
+
+
+        // Delete interests on posts belonging to this shop
+        // (Postgres does not support DELETE with JOIN — use a subquery)
+
+        await db.query(
+            `DELETE FROM post_interests
+             WHERE post_id IN (
+                 SELECT post_id FROM posts WHERE shop_id = $1
+             )`,
+            [shopId]
+        );
+
+
+        // Delete posts
+
+        await db.query(
+            `DELETE FROM posts WHERE shop_id = $1`,
+            [shopId]
+        );
+
+
+        // Delete shop
+
+        const deleteResult = await db.query(
+            `DELETE FROM shops
+             WHERE shop_id = $1 AND owner_id = $2
+             RETURNING shop_id`,
+            [shopId, ownerId]
+        );
+
+
+        if (deleteResult.rowCount === 0) {
+
+            return res.status(403).json({
+                message: "You are not authorized to delete this shop"
+            });
+
+        }
+
+
+        return res.status(200).json({
+            message: "Shop deleted successfully",
+            shopId:  shopId
+        });
+
+
+    } catch (error) {
+
+        console.error("Delete shop error:", error);
+
+        return res.status(500).json({
+            message: "Failed to delete shop"
+        });
+
+    }
+
+};
+
+
 // ========================================
 // EXPORT
 // ========================================
 
 module.exports = {
-
     createShop,
-
     getAllShops,
-
     getShopById,
-
     getMyShop,
-
-    deleteMyShop,
-    updateMyShop
-
-
+    updateMyShop,
+    deleteMyShop
 };
